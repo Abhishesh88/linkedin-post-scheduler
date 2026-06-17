@@ -1,0 +1,56 @@
+name: Generate Daily Post
+
+on:
+  schedule:
+    - cron: '30 3 * * *'  # Daily 09:00 IST / 03:30 UTC (peak LinkedIn hours)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview only (true/false)'
+        required: false
+        default: 'false'
+      force:
+        description: 'Force generation even on weekends (true/false)'
+        required: false
+        default: 'true'
+      theme:
+        description: 'Override theme (e.g. "DeepSeek cuts API prices 75%")'
+        required: false
+        default: ''
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max for retries (5 retries x 1 hour)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Generate post
+        env:
+          YOU_API_KEYS: ${{ secrets.YOU_API_KEYS }}
+          HF_API_KEY: ${{ secrets.HF_API_KEY }}
+          HF_MODEL: ${{ secrets.HF_MODEL }}
+          HF_API_URL: ${{ secrets.HF_API_URL }}
+          GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          CMD="python generate.py"
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            CMD="$CMD --dry-run"
+          fi
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            CMD="$CMD --force"
+          fi
+          if [ -n "${{ github.event.inputs.theme }}" ]; then
+            CMD="$CMD --theme \"${{ github.event.inputs.theme }}\""
+          fi
+          eval $CMD

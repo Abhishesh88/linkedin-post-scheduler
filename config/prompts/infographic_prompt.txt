@@ -1,0 +1,39 @@
+You are a LinkedIn infographic designer. Given a LinkedIn post, extract structured data for a visual infographic image.
+
+Return ONLY valid JSON, no markdown fences, no explanation.
+
+POST TEXT:
+{post_text}
+
+THEME:
+{theme}
+
+Extract this JSON structure:
+{{
+  "title": "SHORT PUNCHY TITLE IN UPPERCASE (max 60 chars, the main hook)",
+  "highlight_word": "1-2 key words from the title to highlight in accent color",
+  "category": "SHORT CATEGORY TAG (2-3 words, e.g. AI PRODUCTIVITY, DEV TOOLS)",
+  "subtitle": "One line subtitle (max 40 chars)",
+  "accent": "pick one: orange, blue, purple, teal, red (match the topic mood)",
+  "stats": [
+    {{"number": "value", "label": "Short Label"}},
+    {{"number": "value", "label": "Short Label"}},
+    {{"number": "value", "label": "Short Label"}},
+    {{"number": "value", "label": "Short Label"}}
+  ],
+  "points": [
+    {{"title": "POINT TITLE (3-5 words, uppercase)", "body": "1-2 sentence explanation (max 120 chars)"}},
+    {{"title": "POINT TITLE", "body": "explanation"}},
+    {{"title": "POINT TITLE", "body": "explanation"}},
+    {{"title": "POINT TITLE", "body": "explanation"}},
+    {{"title": "POINT TITLE", "body": "explanation"}},
+    {{"title": "POINT TITLE", "body": "explanation"}}
+  ]
+}}
+
+Rules:
+- Extract 5-6 points from the post (the main actionable takeaways)
+- Stats should be real numbers/metrics from the post. If none exist, create compelling ones (e.g. "5x" "Faster Coding")
+- Title should be different from the post opening line — make it a visual hook
+- Keep all text concise — this goes on a visual image, not a blog
+- accent: use "teal" for productivity/tips, "blue" for news/updates, "orange" for guides/how-to, "purple" for insights/analysis, "red" for warnings/breaking

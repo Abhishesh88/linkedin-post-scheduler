@@ -1,0 +1,11 @@
+{
+  "targets": [
+    "https://linkedin.com/in/example-creator-1",
+    "https://linkedin.com/in/example-creator-2"
+  ],
+  "daily_limit": 15,
+  "warmup_limit": 5,
+  "warmup_days": 14,
+  "min_gap_seconds": 180,
+  "topics": ["AI tools", "AI agents", "engineering leadership", "system design", "LLMs"]
+}

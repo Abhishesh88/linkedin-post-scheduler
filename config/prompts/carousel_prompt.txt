@@ -1,0 +1,29 @@
+Theme: {theme}
+Day: {day} ({weekday})
+
+=== RESEARCH CONTEXT ===
+{research_summary}
+
+=== INSTRUCTIONS ===
+Generate a LinkedIn carousel post with 6-8 key points.
+
+Return ONLY valid JSON in this exact format (no markdown, no code fences):
+{{
+  "hook": "A bold hook under 10 words for the cover slide",
+  "caption": "2-3 sentence LinkedIn caption to post WITH the carousel. Include a question CTA.",
+  "points": [
+    {{"title": "Short title (5 words max)", "body": "One key insight in 1-2 sentences (under 30 words)"}},
+    {{"title": "Another point", "body": "Another insight"}},
+    {{"title": "...", "body": "..."}},
+  ],
+  "cta_question": "A specific polarizing question for the final slide"
+}}
+
+RULES:
+- Hook: under 10 words, scroll-stopping, creates curiosity
+- 6-8 points, each with a short title and brief body
+- Each body: under 30 words (it must fit on one slide)
+- Name specific tools (Claude Code, Cursor, LangChain, etc.)
+- Reference current news from research context
+- CTA question must be specific and force a response
+- Caption is the text that accompanies the PDF upload on LinkedIn

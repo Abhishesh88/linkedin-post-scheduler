@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+.env
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+credentials/
+.bot.pid
+
+# Secrets & session state — never commit
+*cookies*.json
+render_cookies.json
+src/commenter/config.json
+
+# OS / editor cruft
+.DS_Store
+**/.DS_Store
+.playwright-mcp/
+
+# Generated output
+output/
+*-infographic*.png
+roni-infographic-closeup.png

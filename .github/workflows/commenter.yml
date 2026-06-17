@@ -1,0 +1,32 @@
+name: LinkedIn Commenter
+
+on:
+  schedule:
+    - cron: '30 3,7,11 * * *'  # 9am, 1pm, 5pm IST (every day)
+  workflow_dispatch: {}
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Scan and generate comments
+        env:
+          YOU_API_KEYS: ${{ secrets.YOU_API_KEYS }}
+          HF_API_KEY: ${{ secrets.HF_API_KEY }}
+          HF_MODEL: ${{ secrets.HF_MODEL }}
+          HF_API_URL: ${{ secrets.HF_API_URL }}
+          GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python run_commenter.py

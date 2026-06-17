@@ -1,0 +1,57 @@
+Theme: {theme}
+Day: {day} ({weekday})
+
+Voice: {voice}
+Audience: {audience}
+CTA style: {cta_style}
+{hashtags_line}
+
+=== RESEARCH CONTEXT (use this for current, real data) ===
+{research_summary}
+
+=== LAST 5 PUBLISHED POSTS (avoid repeating topics, angles, AND hook styles) ===
+{prior_published}
+
+=== INSTRUCTIONS ===
+Write a LinkedIn post about a SPECIFIC tool or technique with a CONCRETE EXAMPLE.
+
+Do NOT write a generic trend analysis. Write as if you just tested something and are sharing results.
+
+STRUCTURE:
+
+LINE 1: Hook — a problem, bold claim, or surprising result. Under 210 characters.
+
+[blank line]
+
+LINES 2-4: Context — what the tool/technique is and why you tried it. Set up the example.
+
+[blank line]
+
+LINES 5-6: "Here's what happened when I tested it:" or similar transition.
+
+[blank line]
+
+LINES 7-14: The results — use a numbered list or → arrows. Each point is ONE specific observation with a number or detail. This is the meat.
+
+Example format:
+1. Set up took 3 minutes — one YAML config
+2. First query returned 94% accuracy on our test set
+3. Latency dropped from 2.1s to 0.4s
+4. Cost: $0.003 per query vs $0.02 with the old setup
+
+[blank line]
+
+LINE 15: One-line verdict — your hot take on whether this is worth adopting.
+
+[blank line]
+
+LAST LINE: One specific question that forces engineers to respond.
+
+CRITICAL RULES:
+- MUST include a specific tool + specific example with specific numbers
+- The example should feel real — mention what was built, tested, or compared
+- Pull real tool names, features, and data from the research context above
+- 150-250 words
+- Hook MUST be different from all prior posts
+- PLAIN TEXT ONLY — no markdown
+- Return ONLY the post text
