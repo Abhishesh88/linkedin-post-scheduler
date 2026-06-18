@@ -76,7 +76,7 @@ async def main():
 
     # 2. Update GitHub secret
     print("\nUpdating GitHub secret...")
-    os.system(f'cat {COOKIES_PATH} | gh secret set LINKEDIN_COOKIES --repo Abhishesh88/LinkedInScheduler')
+    os.system(f'cat {COOKIES_PATH} | gh secret set LINKEDIN_COOKIES --repo Abhishesh88/linkedin-post-scheduler')
     print("GitHub secret updated")
 
     # 3. Store in Google Sheets (persistent across Render deploys)
