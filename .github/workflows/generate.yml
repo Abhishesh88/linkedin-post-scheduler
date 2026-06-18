@@ -36,6 +36,9 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - name: Install Playwright Chromium (for infographic rendering)
+        run: python -m playwright install --with-deps chromium
+
       - name: Generate post
         env:
           YOU_API_KEYS: ${{ secrets.YOU_API_KEYS }}
