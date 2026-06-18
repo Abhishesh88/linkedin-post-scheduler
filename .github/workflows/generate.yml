@@ -2,7 +2,11 @@ name: Generate Daily Post
 
 on:
   schedule:
-    - cron: '30 3 * * *'  # Daily 09:00 IST / 03:30 UTC (peak LinkedIn hours)
+    # Daily, peak LinkedIn hours. Multiple morning runs so a model-unavailable
+    # failure self-heals — the "today already posted" check makes re-runs idempotent.
+    - cron: '30 3 * * *'  # 09:00 IST / 03:30 UTC
+    - cron: '30 4 * * *'  # 10:00 IST — retry if 09:00 failed
+    - cron: '30 5 * * *'  # 11:00 IST — final retry
   workflow_dispatch:
     inputs:
       dry_run:
@@ -21,7 +25,7 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 6 hours max for retries (5 retries x 1 hour)
+    timeout-minutes: 20  # fail-fast: short in-job retries, scheduler re-triggers if model is down
     steps:
       - uses: actions/checkout@v4
 

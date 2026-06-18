@@ -30,8 +30,14 @@ from src import telegram_bot
 logger = setup_logging("generate")
 
 
-async def run_generate(dry_run: bool = False, force: bool = False, override_theme: str = "", force_video: bool = False, max_retries: int = 5, retry_delay_min: int = 60):
-    """Generate one post for today. Retries up to max_retries with retry_delay_min gap if model unavailable."""
+async def run_generate(dry_run: bool = False, force: bool = False, override_theme: str = "", force_video: bool = False, max_retries: int = 3, retry_delay_sec: int = 30):
+    """Generate one post for today.
+
+    Fail-fast retry: tries up to max_retries with a short retry_delay_sec gap if the
+    model is unavailable, then exits cleanly. We do NOT sleep for long periods inside
+    the job (that burns scheduler/runner minutes). The 'today already posted' check at
+    the top makes it safe for the scheduler to simply re-trigger later.
+    """
     today = date.today()
     weekday = today.strftime("%A")
 
@@ -111,12 +117,11 @@ async def run_generate(dry_run: bool = False, force: bool = False, override_them
             if draft:
                 break
             if attempt < max_retries:
-                logger.warning("Model unavailable, retrying in %d minutes (attempt %d/%d)", retry_delay_min, attempt, max_retries)
-                await telegram_bot.send_notification(f"Model unavailable for: {theme}. Retrying in {retry_delay_min} min (attempt {attempt}/{max_retries})")
-                await asyncio.sleep(retry_delay_min * 60)
+                logger.warning("Model unavailable, retrying in %d seconds (attempt %d/%d)", retry_delay_sec, attempt, max_retries)
+                await asyncio.sleep(retry_delay_sec)
             else:
-                logger.error("Post generation failed after %d attempts.", max_retries)
-                await telegram_bot.send_notification(f"ERROR: Failed to generate post for: {theme} after {max_retries} attempts")
+                logger.error("Post generation failed after %d attempts — exiting; scheduler will re-trigger.", max_retries)
+                await telegram_bot.send_notification(f"ERROR: Model unavailable for: {theme} after {max_retries} attempts. Will retry on next scheduled run.")
                 return
 
         # Dedup check

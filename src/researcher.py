@@ -67,23 +67,38 @@ _HACKER_NEWS_VIRAL = [
     "site:news.ycombinator.com AI agent framework {year}",
 ]
 
+# Leadership / team-impact angles — the intersection niche (technical depth + EM lens)
+_LEADERSHIP_ANGLES = [
+    "how AI coding agents change engineering team workflow {year}",
+    "engineering manager AI adoption productivity impact {year}",
+    "AI code review process change engineering teams {year}",
+    "hiring engineers in the AI era what changed {year}",
+    "developer productivity AI tools real results team {year}",
+    "engineering leadership AI agents build vs buy {year}",
+    "what junior engineers do now AI automation {year}",
+]
+
 # All discovery queries combined for sampling
 _ALL_DISCOVERY_QUERIES = (
     _TRENDING_REPOS + _BREAKING_NEWS + _ARCHITECTURE_DEEP_DIVES
-    + _BENCHMARKS_COMPARISONS + _HACKER_NEWS_VIRAL
+    + _BENCHMARKS_COMPARISONS + _HACKER_NEWS_VIRAL + _LEADERSHIP_ANGLES
 )
 
 TOPIC_PICKER_PROMPT = """You are picking a topic for a LinkedIn post by Abhishesh Mishra (Associate Director of Engineering).
 
 The post style is like Avi Chawla's "Daily Dose of Data Science" — deep technical analysis with specific numbers.
 
+Abhishesh sits at a rare intersection: deep technical credibility AND real engineering-leadership experience. The BEST topic is one he can analyze technically (specific numbers) AND frame through a leader's lens ("what this means for how teams hire, ship, review code, or decide"). Favor topics with that dual angle.
+
 PRIORITY ORDER (pick the FIRST category that has a good topic):
 
-1. GITHUB TRENDING REPO (HIGHEST PRIORITY) — a repo from the GITHUB TRENDING list below that gained 1000+ stars in the last week. These are VERIFIED real repos with real star counts. Pick from this list first.
+1. GITHUB TRENDING REPO (HIGHEST PRIORITY) — a repo from the GITHUB TRENDING list below that gained 1000+ stars in the last week, that ALSO has a clear "what this means for engineering teams" angle. These are VERIFIED real repos with real star counts. Pick from this list first.
 
-2. BREAKING AI NEWS — a new model release, tool launch, or benchmark result from THIS WEEK
+2. BREAKING AI NEWS — a new model release, tool launch, or benchmark result from THIS WEEK with a team/leadership implication
 
-3. ARCHITECTURE CONCEPT — agent memory, RAG patterns, MoE routing, prompt caching — only if no good trending repo or news
+3. ENGINEERING-LEADERSHIP-IN-THE-AI-ERA — how AI changes code review, hiring, team velocity, build-vs-buy, what juniors do now (use the leadership research below)
+
+4. ARCHITECTURE CONCEPT — agent memory, RAG patterns, MoE routing, prompt caching — only if no good trending repo or news
 
 GITHUB TRENDING (REAL DATA from GitHub API — these repos were created in the last 7 days):
 {github_trending}
@@ -315,6 +330,7 @@ async def discover_trending_topic(search_client: YouSearchClient, llm_client, re
     queries += [q.format(year=year) for q in random.sample(_BREAKING_NEWS, min(3, len(_BREAKING_NEWS)))]
     queries += [q.format(year=year) for q in random.sample(_ARCHITECTURE_DEEP_DIVES, min(2, len(_ARCHITECTURE_DEEP_DIVES)))]
     queries += [q.format(year=year) for q in random.sample(_BENCHMARKS_COMPARISONS, min(2, len(_BENCHMARKS_COMPARISONS)))]
+    queries += [q.format(year=year) for q in random.sample(_LEADERSHIP_ANGLES, min(2, len(_LEADERSHIP_ANGLES)))]
 
     logger.info("Discovering trending topics with %d queries...", len(queries))
     responses = await search_client.batch_search(queries)
