@@ -58,6 +58,7 @@ def format_post_prompt(
     research_summary: str,
     prior_posts_this_week: str,
     prior_published: str,
+    prior_hooks: str = "None yet.",
 ) -> str:
     """Format the user prompt for post generation."""
     template = _load_prompt("post_prompt.txt")
@@ -73,6 +74,7 @@ def format_post_prompt(
         research_summary=research_summary,
         prior_posts_this_week=prior_posts_this_week,
         prior_published=prior_published,
+        prior_hooks=prior_hooks,
     )
 
 
@@ -109,6 +111,10 @@ async def generate_post(
         research_summary=research_summary,
         prior_posts_this_week="\n---\n".join(prior_posts_this_week) if prior_posts_this_week else "None yet.",
         prior_published="\n---\n".join(prior_published) if prior_published else "None.",
+        prior_hooks="\n".join(
+            f"- {t.strip().splitlines()[0].strip()}"
+            for t in prior_published if t and t.strip()
+        ) if prior_published else "None yet.",
     )
 
     response = await llm.generate(user_prompt, system_prompt=system_prompt)
