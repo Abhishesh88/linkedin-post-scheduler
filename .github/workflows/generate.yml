@@ -39,6 +39,10 @@ jobs:
       - name: Generate post
         env:
           YOU_API_KEYS: ${{ secrets.YOU_API_KEYS }}
+          # LLM: Ollama Cloud gemma4 (default). HF kept as fallback (LLM_PROVIDER=hf).
+          LLM_PROVIDER: ollama
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA_MODEL: gemma4:31b-cloud
           HF_API_KEY: ${{ secrets.HF_API_KEY }}
           HF_MODEL: ${{ secrets.HF_MODEL }}
           HF_API_URL: ${{ secrets.HF_API_URL }}
