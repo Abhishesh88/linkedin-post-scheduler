@@ -18,6 +18,9 @@ import os
 import urllib.parse
 import webbrowser
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 CLIENT_ID = os.environ["LINKEDIN_CLIENT_ID"]
 CLIENT_SECRET = os.environ["LINKEDIN_CLIENT_SECRET"]
