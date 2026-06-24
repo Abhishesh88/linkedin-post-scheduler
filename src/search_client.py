@@ -117,39 +117,43 @@ class YouSearchClient:
         freshness: str | None = None,
     ) -> SearchResponse:
         async with self.semaphore:
-            key = self._get_next_key()
-            if key is None:
-                return SearchResponse(query=query, web_results=[], news_results=[], error="No healthy keys")
-            try:
-                async with You(key.key) as you:
-                    kwargs = {"query": query, "count": count}
-                    if country:
-                        kwargs["country"] = country
-                    if freshness:
-                        kwargs["freshness"] = freshness
-                    # Hard timeout — the SDK has none, so a stuck request would hang
-                    # the whole batch_search gather (and the CI job) indefinitely.
-                    sdk_res = await asyncio.wait_for(
-                        you.search.unified_async(**kwargs), timeout=30
-                    )
-                key.total_calls += 1
-                return self._parse_sdk_response(query, sdk_res)
-            except asyncio.TimeoutError:
-                key.errors += 1
-                self._cooldown_key(key)
-                logger.warning("Search timed out (30s) for '%s'", query[:50])
-                return SearchResponse(query=query, web_results=[], news_results=[], error="timeout")
-            except Exception as e:
-                error_str = str(e).lower()
-                key.errors += 1
-                if "403" in error_str or "forbidden" in error_str:
-                    self._blacklist_key(key)
-                    return await self.search(query, count, country, freshness)
-                if "429" in error_str or "rate" in error_str:
+            # Try keys in a loop within ONE semaphore slot. Never recurse here —
+            # recursing while holding the slot deadlocks once keys start failing.
+            for _ in range(len(self.keys)):
+                key = self._get_next_key()
+                if key is None:
+                    return SearchResponse(query=query, web_results=[], news_results=[], error="No healthy keys")
+                try:
+                    async with You(key.key) as you:
+                        kwargs = {"query": query, "count": count}
+                        if country:
+                            kwargs["country"] = country
+                        if freshness:
+                            kwargs["freshness"] = freshness
+                        # Hard timeout — the SDK has none, so a stuck request would
+                        # otherwise hang batch_search's gather (and the CI job).
+                        sdk_res = await asyncio.wait_for(
+                            you.search.unified_async(**kwargs), timeout=30
+                        )
+                    key.total_calls += 1
+                    return self._parse_sdk_response(query, sdk_res)
+                except asyncio.TimeoutError:
+                    key.errors += 1
                     self._cooldown_key(key)
-                    return await self.search(query, count, country, freshness)
-                logger.error("Search error for '%s': %s", query[:50], e)
-                return SearchResponse(query=query, web_results=[], news_results=[], error=str(e))
+                    logger.warning("Search timed out (30s) for '%s'", query[:50])
+                    continue
+                except Exception as e:
+                    error_str = str(e).lower()
+                    key.errors += 1
+                    if "403" in error_str or "forbidden" in error_str:
+                        self._blacklist_key(key)
+                        continue
+                    if "429" in error_str or "rate" in error_str:
+                        self._cooldown_key(key)
+                        continue
+                    logger.error("Search error for '%s': %s", query[:50], e)
+                    return SearchResponse(query=query, web_results=[], news_results=[], error=str(e))
+            return SearchResponse(query=query, web_results=[], news_results=[], error="all keys exhausted")
 
     async def batch_search(self, queries: list[str], **kwargs) -> list[SearchResponse]:
         tasks = [self.search(q, **kwargs) for q in queries]
