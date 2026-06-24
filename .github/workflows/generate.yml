@@ -41,6 +41,8 @@ jobs:
 
       - name: Generate post
         env:
+          # Lets `gh api search/repositories` work in CI for GitHub-trending discovery
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           YOU_API_KEYS: ${{ secrets.YOU_API_KEYS }}
           # LLM: Ollama Cloud gemma4 (default). HF kept as fallback (LLM_PROVIDER=hf).
           LLM_PROVIDER: ollama
