@@ -127,9 +127,18 @@ class YouSearchClient:
                         kwargs["country"] = country
                     if freshness:
                         kwargs["freshness"] = freshness
-                    sdk_res = await you.search.unified_async(**kwargs)
+                    # Hard timeout — the SDK has none, so a stuck request would hang
+                    # the whole batch_search gather (and the CI job) indefinitely.
+                    sdk_res = await asyncio.wait_for(
+                        you.search.unified_async(**kwargs), timeout=30
+                    )
                 key.total_calls += 1
                 return self._parse_sdk_response(query, sdk_res)
+            except asyncio.TimeoutError:
+                key.errors += 1
+                self._cooldown_key(key)
+                logger.warning("Search timed out (30s) for '%s'", query[:50])
+                return SearchResponse(query=query, web_results=[], news_results=[], error="timeout")
             except Exception as e:
                 error_str = str(e).lower()
                 key.errors += 1
