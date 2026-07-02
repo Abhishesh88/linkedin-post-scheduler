@@ -9,6 +9,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 
+import httpx
 from dotenv import load_dotenv
 from youdotcom import You
 
@@ -56,10 +57,38 @@ class YouSearchClient:
         self._key_index = 0
         self.semaphore = asyncio.Semaphore(max_concurrent)
         self.cooldown_seconds = cooldown_seconds
-        logger.info("Loaded %d You.com API keys", len(self.keys))
+        # Firecrawl takes over when configured (self-hosted or cloud). Falls back to You.com.
+        self.firecrawl_url = os.getenv("FIRECRAWL_URL", "").rstrip("/")
+        self.firecrawl_key = os.getenv("FIRECRAWL_API_KEY", "")
+        if self.firecrawl_url:
+            logger.info("Search provider: Firecrawl (%s)", self.firecrawl_url)
+        else:
+            logger.info("Search provider: You.com (%d keys)", len(self.keys))
 
     async def close(self):
         pass
+
+    async def _firecrawl_search(self, query: str, count: int) -> SearchResponse:
+        """Search via a Firecrawl /v1/search endpoint (self-hosted or cloud)."""
+        headers = {"Content-Type": "application/json"}
+        if self.firecrawl_key:
+            headers["Authorization"] = f"Bearer {self.firecrawl_key}"
+        payload = {"query": query, "limit": count}
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(f"{self.firecrawl_url}/v1/search", json=payload, headers=headers)
+        if resp.status_code != 200:
+            logger.warning("Firecrawl search %d for '%s'", resp.status_code, query[:50])
+            return SearchResponse(query=query, web_results=[], news_results=[], error=f"HTTP {resp.status_code}")
+        web = []
+        for r in (resp.json().get("data") or []):
+            desc = r.get("description", "") or ""
+            web.append(SearchResult(
+                url=r.get("url", "") or "",
+                title=r.get("title", "") or "",
+                description=desc,
+                snippets=[desc] if desc else [],
+            ))
+        return SearchResponse(query=query, web_results=web, news_results=[])
 
     def _get_next_key(self) -> APIKey | None:
         now = time.time()
@@ -117,6 +146,12 @@ class YouSearchClient:
         freshness: str | None = None,
     ) -> SearchResponse:
         async with self.semaphore:
+            if self.firecrawl_url:
+                try:
+                    return await asyncio.wait_for(self._firecrawl_search(query, count), timeout=35)
+                except Exception as e:
+                    logger.error("Firecrawl search error '%s': %s", query[:50], e)
+                    return SearchResponse(query=query, web_results=[], news_results=[], error=str(e))
             # Try keys in a loop within ONE semaphore slot. Never recurse here —
             # recursing while holding the slot deadlocks once keys start failing.
             for _ in range(len(self.keys)):
