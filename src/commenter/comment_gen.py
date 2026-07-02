@@ -14,13 +14,19 @@ logger = logging.getLogger(__name__)
 
 
 def generate_comment(post_text: str, author: str = "") -> str | None:
-    """Generate a comment using HuggingFace LLM."""
-    hf_key = os.getenv("HF_API_KEY", "")
-    hf_model = os.getenv("HF_MODEL", "Qwen/Qwen3-235B-A22B")
-    hf_url = os.getenv("HF_API_URL", "https://router.huggingface.co/v1/chat/completions")
+    """Generate a comment via the configured LLM (Ollama gemma4 by default, HF optional)."""
+    provider = os.getenv("LLM_PROVIDER", "ollama").lower()
+    if provider == "hf":
+        api_key = os.getenv("HF_API_KEY", "")
+        model = os.getenv("HF_MODEL", "Qwen/Qwen3-235B-A22B")
+        url = os.getenv("HF_API_URL", "https://router.huggingface.co/v1/chat/completions")
+    else:  # ollama (default) — OpenAI-compatible
+        api_key = os.getenv("OLLAMA_API_KEY", "") or os.getenv("HF_API_KEY", "")
+        model = os.getenv("OLLAMA_MODEL", "gemma4:31b-cloud")
+        url = os.getenv("OLLAMA_API_URL", "https://ollama.com/v1/chat/completions")
 
-    if not hf_key:
-        logger.error("HF_API_KEY not set")
+    if not api_key:
+        logger.error("No LLM API key set (OLLAMA_API_KEY / HF_API_KEY)")
         return None
 
     # Build author instruction based on whether we know the name
@@ -50,19 +56,22 @@ Write a LinkedIn comment (2-3 short paragraphs) that:
 
 Return ONLY the comment text."""
 
+    system_msg = "Write concise LinkedIn comments."
+    if "qwen" in model.lower():
+        system_msg += " /no_think"
     payload = {
-        "model": hf_model,
+        "model": model,
         "messages": [
-            {"role": "system", "content": "Write concise LinkedIn comments. /no_think"},
+            {"role": "system", "content": system_msg},
             {"role": "user", "content": prompt},
         ],
         "max_tokens": 300,
         "temperature": 0.7,
     }
-    headers = {"Authorization": f"Bearer {hf_key}", "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
     try:
-        resp = httpx.post(hf_url, json=payload, headers=headers, timeout=60)
+        resp = httpx.post(url, json=payload, headers=headers, timeout=60)
         if resp.status_code == 200:
             text = resp.json()["choices"][0]["message"]["content"].strip()
             text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()

@@ -21,7 +21,11 @@ jobs:
 
       - name: Scan and generate comments
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           YOU_API_KEYS: ${{ secrets.YOU_API_KEYS }}
+          LLM_PROVIDER: ollama
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          OLLAMA_MODEL: gemma4:31b-cloud
           HF_API_KEY: ${{ secrets.HF_API_KEY }}
           HF_MODEL: ${{ secrets.HF_MODEL }}
           HF_API_URL: ${{ secrets.HF_API_URL }}
